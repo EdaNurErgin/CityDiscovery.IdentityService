@@ -1,0 +1,26 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build çıktıları
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# VS/Copilot/SQLite indexleri
+*.db
+*.db-shm
+*.db-wal
+
+# Diğer
+*.log
+logs/
