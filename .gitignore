@@ -11,20 +11,3 @@ obj/
 *.userosscache
 *.sln.docstates
 
-# ASP.NET Core secrets
-**/appsettings.Development.json
-
-# Rider / Jetbrains
-.idea/
-*.sln.iml
-
-# Logs
-*.log
-
-# NuGet packages
-*.nupkg
-packages/
-
-# Others
-.DS_Store
-Thumbs.db

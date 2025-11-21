@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP (uygulamalar için)
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest   # opsiyonel: de?i?tirilebilir
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Eda12345!
+      - MSSQL_PID=Developer
+    ports: ["1433:1433"]
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Eda12345!", "-C", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  identity:
+    build: ./IdentityService
+    container_name: identity-service
+    ports: ["5001:80"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mssql:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mssql;Database=CityDiscovery_IdentityDb;User Id=sa;Password=Eda12345!;TrustServerCertificate=True;
+      - Jwt__Issuer=identity
+      - Jwt__Audience=citydiscovery
+      - Jwt__Key=pLw3V!zJg7^2qK0xD8mR4tY1uC6bN9fQ5sH3kL0wX2yZ8rT6vB1nM4pQ7sU2dE9
+      # ?? MassTransit/RabbitMQ için kritik env'ler
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__VirtualHost=/
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+
+  venue:
+    build: ./VenueService
+    container_name: venue-service
+    ports: ["5002:80"]
+    depends_on:
+      rabbitmq:
+        condition: service_started   # ?imdilik healthcheck zorunlu de?il
+      mssql:
+        condition: service_started
+    environment:
+      - Jwt__Issuer=identity
+      - Jwt__Audience=citydiscovery
+      - Jwt__Key=pLw3V!zJg7^2qK0xD8mR4tY1uC6bN9fQ5sH3kL0wX2yZ8rT6vB1nM4pQ7sU2dE9
+
+  social:
+    build: ./SocialService
+    container_name: social-service
+    ports: ["5003:80"]
+    depends_on: [ mssql ]  # RabbitMQ ?imdilik ?art de?il
+
+  review:
+    build: ./ReviewService
+    container_name: review-service
+    ports: ["5004:80"]
+    depends_on: [ mssql ]
+
+  admin:
+    build: ./AdminService
+    container_name: admin-service
+    ports: ["5005:80"]
+    depends_on: [ mssql ]
+
+  gateway:
+    build: ./Gateway
+    container_name: gateway
+    ports: ["5000:80"]
+    depends_on: [ identity, venue, social, review, admin ]
+
+volumes:
+  mssql-data:
