@@ -1,5 +1,5 @@
 ﻿using IdentityService.Application.DTOs.Users;
-using Shared.Common.DTOs.Identity;
+using IdentityService.Shared.Common.DTOs.Identity;
 
 namespace IdentityService.Application.Interfaces
 {

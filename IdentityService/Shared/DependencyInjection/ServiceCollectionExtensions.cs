@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Shared.Services;
+using IdentityService.Shared.Services;
 
-namespace Shared.DependencyInjection
+namespace IdentityService.Shared.DependencyInjection
 {
     /// <summary>
     /// Shared kütüphanesi için DI extension metodları
@@ -33,3 +33,4 @@ namespace Shared.DependencyInjection
         }
     }
 }
+

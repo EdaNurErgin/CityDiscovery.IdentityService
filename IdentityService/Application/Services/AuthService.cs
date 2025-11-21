@@ -7,7 +7,7 @@ using IdentityService.Infrastructure.Repositories;
 
 // MassTransit ve Event sözleşmesi
 using MassTransit; 
-using Shared.MessageBus.Identity; // Shared/MessageBus/Identity/UserCreatedEvent.cs
+using IdentityService.Shared.MessageBus.Identity;
 
 namespace IdentityService.Application.Services
 {

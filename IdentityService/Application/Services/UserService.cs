@@ -1,7 +1,7 @@
 ﻿using IdentityService.Application.DTOs.Users;
 using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Entities;
-using Shared.Common.DTOs.Identity;
+using IdentityService.Shared.Common.DTOs.Identity;
 
 public class UserService : IUserService
 {

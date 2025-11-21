@@ -2,7 +2,7 @@
 using IdentityService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Common.DTOs.Identity;
+using IdentityService.Shared.Common.DTOs.Identity;
 
 [ApiController]
 [Route("api/[controller]")]

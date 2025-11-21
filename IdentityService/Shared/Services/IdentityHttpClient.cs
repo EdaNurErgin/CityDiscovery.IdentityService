@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Shared.Common.DTOs.Identity;
+using IdentityService.Shared.Common.DTOs.Identity;
 
-namespace Shared.Services
+namespace IdentityService.Shared.Services
 {
     /// <summary>
     /// IdentityService ile HTTP üzerinden iletişim kurmak için kullanılan client
@@ -159,3 +159,4 @@ namespace Shared.Services
         }
     }
 }
+
