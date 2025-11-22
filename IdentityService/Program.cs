@@ -42,11 +42,14 @@ namespace IdentityService
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            // Swagger her zaman açık (Development ve Production)
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "CityDiscovery Identity Service API v1");
+                c.RoutePrefix = string.Empty; // Swagger'ı root'ta göster
+                c.DocumentTitle = "Identity Service API Documentation";
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();

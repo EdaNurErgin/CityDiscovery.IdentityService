@@ -34,10 +34,30 @@ namespace IdentityService.DependencyInjection
 
             services.AddAuthorization();
 
-            // Swagger Security
+            // Swagger Configuration
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new() { Title = "IdentityService", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "CityDiscovery Identity Service API",
+                    Version = "v1",
+                    Description = "Identity ve Authentication servisi için RESTful API. Kullanıcı yönetimi, JWT token yönetimi ve yetkilendirme işlemlerini içerir.",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "CityDiscovery Team",
+                        Email = "support@citydiscovery.com"
+                    }
+                });
+
+                // XML Comments'i dahil et
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
+
+                // JWT Bearer Token Security Definition
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -45,16 +65,23 @@ namespace IdentityService.DependencyInjection
                     Scheme = "bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Bearer {token}"
+                    Description = "JWT Authorization header using the Bearer scheme. Örnek: \"Bearer {token}\""
                 });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement{
-                  {
-                    new OpenApiSecurityScheme
+
+                // Tüm endpoint'lerde Bearer token kullanımını zorunlu kıl
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
                     {
-                      Reference = new OpenApiReference{ Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                    },
-                    Array.Empty<string>()
-                  }
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
                 });
             });
 
