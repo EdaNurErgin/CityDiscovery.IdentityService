@@ -17,9 +17,10 @@ namespace IdentityService
             builder.Services.AddControllers();
            
             builder.Services.AddEndpointsApiExplorer();
-           
 
-          
+            builder.Services.AddSwaggerGen();
+
+
             builder.Services.AddIdentityInfrastructure(builder.Configuration);
             builder.Services.AddIdentityApplication(builder.Configuration);
 
@@ -47,7 +48,7 @@ namespace IdentityService
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "CityDiscovery Identity Service API v1");
-                c.RoutePrefix = string.Empty; // Swagger'ı root'ta göster
+                //c.RoutePrefix = string.Empty; // Swagger'ı root'ta göster
                 c.DocumentTitle = "Identity Service API Documentation";
             });
 
