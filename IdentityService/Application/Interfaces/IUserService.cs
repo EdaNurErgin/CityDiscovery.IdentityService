@@ -1,4 +1,5 @@
 ﻿using IdentityService.Application.DTOs.Users;
+using IdentityService.Domain.Entities;
 using IdentityService.Shared.Common.DTOs.Identity;
 
 namespace IdentityService.Application.Interfaces
@@ -15,5 +16,7 @@ namespace IdentityService.Application.Interfaces
         Task<string> GetUserRoleAsync(Guid id);
         Task<List<UserDto>> GetActiveUsersAsync();
         Task<List<UserDto>> GetUsersByCityAsync(string city);
+        Task DeleteAsync(Guid id);
+        
     }
 }

@@ -17,5 +17,6 @@ namespace IdentityService.Application.Interfaces
         Task<List<User>> GetBulkByIdsAsync(List<Guid> userIds);
         Task<List<User>> GetActiveUsersAsync();
         Task<List<User>> GetUsersByCityAsync(string city);
+        void Remove(User user);
     }
 }

@@ -161,5 +161,26 @@ namespace IdentityService.Controllers
         [ProducesResponseType(typeof(List<UserDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<UserDto>>> GetUsersByCity(string city)
             => Ok(await _users.GetUsersByCityAsync(city));
+
+
+
+        /// <summary>
+        /// Kullanıcıyı sistemden siler (Genellikle Admin veya kullanıcının kendisi yapar)
+        /// </summary>
+        /// <param name="id">Silinecek Kullanıcı ID</param>
+        [Authorize] // İsteğe göre [Authorize(Roles = "Admin")] yapılabilir
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            // (Opsiyonel: Kullanıcı sadece kendini silebilir kontrolü burada yapılabilir)
+            await _users.DeleteAsync(id);
+            return NoContent();
+        }
     }
+
+
+
 }
