@@ -47,5 +47,10 @@ namespace IdentityService.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
 
+
+        public void Remove(User user)
+        {
+            _db.Users.Remove(user);
+        }
     }
 }
