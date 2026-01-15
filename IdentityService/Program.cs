@@ -1,8 +1,9 @@
-
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using IdentityService.Application.Validators;
 using IdentityService.DependencyInjection;
+using IdentityService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace IdentityService
@@ -36,11 +37,29 @@ namespace IdentityService
 
             builder.Host.UseSerilog();
 
-
-
+            // Health Checks
+            builder.Services.AddHealthChecks();
 
 
             var app = builder.Build();
+
+            // ==========================================================================
+            // Database Migration at Startup
+            // ==========================================================================
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var dbContext = services.GetRequiredService<IdentityDbContext>();
+                    dbContext.Database.Migrate();
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while migrating the identity database.");
+                }
+            }
 
             // Configure the HTTP request pipeline.
             // Swagger her zaman açık (Development ve Production)
@@ -55,6 +74,8 @@ namespace IdentityService
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Health Check Endpoint
+            app.MapHealthChecks("/health");
 
             app.MapControllers();
 
