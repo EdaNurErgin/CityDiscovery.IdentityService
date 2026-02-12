@@ -2,18 +2,19 @@
 using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Shared.Common.DTOs.Identity;
-using MassTransit;
 using IdentityService.Shared.MessageBus.Identity; 
+using MassTransit;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _uow;
-    private readonly IPublishEndpoint _publishEndpoint; // EKLENDİ
+    private readonly IPublishEndpoint _publishEndpoint; 
+    private readonly IUserRepository _userRepository;
 
-    public UserService(IUserRepository users, IUnitOfWork uow, IPublishEndpoint publishEndpoint)
+    public UserService(IUserRepository users, IUnitOfWork uow, IPublishEndpoint publishEndpoint, IUserRepository userRepository)
     {
-        _users = users; _uow = uow; _publishEndpoint = publishEndpoint;
+        _users = users; _uow = uow; _publishEndpoint = publishEndpoint; _userRepository = userRepository;
     }
 
     public async Task<UserDto> GetByIdAsync(Guid id)
@@ -23,21 +24,7 @@ public class UserService : IUserService
         return ToDto(user);
     }
 
-    //public async Task<UserDto> UpdateProfileAsync(Guid id, UpdateProfileRequest r)
-    //{
-    //    var user = await _users.GetByIdAsync(id) ?? throw new KeyNotFoundException("User not found");
-    //    if (!user.IsActive) throw new InvalidOperationException("Inactive user");
 
-    //    user.UserName = r.UserName ?? user.UserName;
-    //    user.Bio = r.Bio ?? user.Bio;
-    //    user.City = r.City ?? user.City;
-    //    user.AvatarUrl = r.AvatarUrl ?? user.AvatarUrl;
-    //    user.DateOfBirth = r.DateOfBirth ?? user.DateOfBirth;
-    //    user.UpdatedAt = DateTime.UtcNow;
-
-    //    await _uow.SaveChangesAsync();
-    //    return ToDto(user);
-    //}
     public async Task<UserDto> UpdateProfileAsync(Guid id, UpdateProfileRequest r)
     {
         var user = await _users.GetByIdAsync(id) ?? throw new KeyNotFoundException("User not found");
@@ -88,7 +75,6 @@ public class UserService : IUserService
     public async Task<bool> ExistsAsync(Guid id)
         => (await _users.GetByIdAsync(id)) is not null;
 
-    // 🆕 YENİ METODLAR - Diğer servisler için
     public async Task<List<UserDto>> GetBulkByIdsAsync(List<Guid> userIds)
     {
         var users = await _users.GetBulkByIdsAsync(userIds);
@@ -126,27 +112,83 @@ public class UserService : IUserService
     };
 
     // UserService sınıfının içine eklenecek metod:
+    //public async Task DeleteAsync(Guid id)
+    //{
+    //    var user = await _users.GetByIdAsync(id);
+    //    if (user == null) throw new KeyNotFoundException("User not found");
+
+    //    // 1. Kullanıcıyı sil (veya IsActive = false yap)
+    //    // Eğer Hard Delete yapıyorsan:
+    //    _users.Remove(user);
+    //    // Eğer Soft Delete yapıyorsan:
+    //    // user.IsActive = false; 
+
+    //    await _uow.SaveChangesAsync();
+
+    //    // 2. Diğer servislere "Bu kullanıcı silindi" diye haber ver
+    //    // (Social servisi postlarını silecek, Review servisi yorumlarını silecek vs.)
+    //    await _publishEndpoint.Publish(new UserDeletedEvent(
+    //        user.Id,
+    //        user.UserName,
+    //        user.Email,
+    //        user.Role.ToString(),
+    //        DateTime.UtcNow
+    //    ));
+    //}
+    // UserService.cs dosyasının içine en alta ekleyin:
+
+    public async Task<List<UserDto>> GetUsersByRoleAsync(string role)
+    {
+        // 1. Repository'den kullanıcıları çek
+        var users = await _userRepository.GetUsersByRoleAsync(role);
+
+        // 2. Entity -> DTO Çevirimi Yap (Hata veren satırlar kaldırıldı)
+        var userDtos = users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+            Email = u.Email
+
+            // Eğer User tablonuzda "Name" ve "Surname" varsa şu şekilde birleştirebilirsiniz:
+            // FullName = u.Name + " " + u.Surname, 
+
+            // Eğer User tablonuzda "City" varsa yorumu kaldırın:
+            // City = u.City 
+
+        }).ToList();
+
+        return userDtos;
+    }
     public async Task DeleteAsync(Guid id)
     {
         var user = await _users.GetByIdAsync(id);
         if (user == null) throw new KeyNotFoundException("User not found");
 
-        // 1. Kullanıcıyı sil (veya IsActive = false yap)
-        // Eğer Hard Delete yapıyorsan:
+        // 1. Veritabanı işlemini yap
         _users.Remove(user);
-        // Eğer Soft Delete yapıyorsan:
-        // user.IsActive = false; 
+        await _uow.SaveChangesAsync(); // <-- Kullanıcı burada silindi bile!
 
-        await _uow.SaveChangesAsync();
+        // 2. Event Fırlatmayı "Güvenli Blok" içine al
+        try
+        {
+            // Cancellation Token eklemek de iyi bir pratiktir
+            var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token; // 5 sn bekle
 
-        // 2. Diğer servislere "Bu kullanıcı silindi" diye haber ver
-        // (Social servisi postlarını silecek, Review servisi yorumlarını silecek vs.)
-        await _publishEndpoint.Publish(new UserDeletedEvent(
-            user.Id,
-            user.UserName,
-            user.Email,
-            user.Role.ToString(),
-            DateTime.UtcNow
-        ));
+            await _publishEndpoint.Publish(new UserDeletedEvent(
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.Role.ToString(),
+                DateTime.UtcNow
+            ), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Buraya mutlaka bir Logger ekleyin (Console.WriteLine geçici olarak iş görür)
+            Console.WriteLine($"Kullanıcı silindi AMA Event gönderilemedi! Hata: {ex.Message}");
+
+            // ÖNEMLİ: Hatayı 'throw' ile fırlatmıyoruz. 
+            // Böylece API 204 NoContent dönmeye devam edebiliyor.
+        }
     }
 }

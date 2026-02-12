@@ -11,12 +11,15 @@ namespace IdentityService.Application.Interfaces
         Task<List<UserDto>> GetAllAsync();             // Admin listeleme
         Task<bool> ExistsAsync(Guid id);               // Exists endpoint'i için
         
-        // 🆕 YENİ METODLAR - Diğer servisler için
         Task<List<UserDto>> GetBulkByIdsAsync(List<Guid> userIds);
         Task<string> GetUserRoleAsync(Guid id);
         Task<List<UserDto>> GetActiveUsersAsync();
         Task<List<UserDto>> GetUsersByCityAsync(string city);
         Task DeleteAsync(Guid id);
-        
+
+        Task<List<UserDto>> GetUsersByRoleAsync(string role);
+
+
+
     }
 }

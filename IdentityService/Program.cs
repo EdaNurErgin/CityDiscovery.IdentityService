@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using IdentityService.Application.Validators;
 using IdentityService.DependencyInjection;
 using IdentityService.Infrastructure.Data;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -30,8 +31,8 @@ namespace IdentityService
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
             
-            builder.Services.AddMessageBus(builder.Configuration); 
-
+            builder.Services.AddMessageBus(builder.Configuration);
+          
 
             Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
@@ -43,9 +44,7 @@ namespace IdentityService
 
             var app = builder.Build();
 
-            // ==========================================================================
-            // Database Migration at Startup
-            // ==========================================================================
+
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;

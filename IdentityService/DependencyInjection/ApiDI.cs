@@ -88,16 +88,23 @@ namespace IdentityService.DependencyInjection
             return services;
         }
 
-        // İstersen MassTransit’i buraya da koyabilirsin:
         public static IServiceCollection AddMessageBus(this IServiceCollection services, IConfiguration configuration)
         {
-            var host = configuration["RabbitMq:Host"] ?? "rabbitmq";
-            var vhost = configuration["RabbitMq:VirtualHost"] ?? "/";
+            // Appsettings'den okuyamazsa varsayılan değerleri kullan
+            var host = configuration["RabbitMq:Host"] ?? "localhost";
+
+            // VirtualHost: Diğer servislerde "/" kullanıyorsan burada da "/" olmalı!
+            var vhost = configuration["RabbitMq:VirtualHost"];
+            if (string.IsNullOrEmpty(vhost)) vhost = "/";
+
             var user = configuration["RabbitMq:Username"] ?? "guest";
             var pass = configuration["RabbitMq:Password"] ?? "guest";
 
             services.AddMassTransit(x =>
             {
+                // Identity genelde sadece mesaj üretir (Publisher). 
+                // Ama ileride consumer eklerseniz buraya x.AddConsumer<...>(); yazarsınız.
+
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(host, vhost, h =>
@@ -105,6 +112,9 @@ namespace IdentityService.DependencyInjection
                         h.Username(user);
                         h.Password(pass);
                     });
+
+                    // Endpoint yapılandırmasını otomatik yap
+                    cfg.ConfigureEndpoints(context);
                 });
             });
 

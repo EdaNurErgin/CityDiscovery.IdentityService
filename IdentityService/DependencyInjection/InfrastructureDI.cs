@@ -11,7 +11,7 @@ namespace IdentityService.DependencyInjection
     {
         public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // 🔹 DbContext kaydı
+            // DbContext kaydı
             services.AddDbContext<IdentityDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
