@@ -1,8 +1,9 @@
 ﻿using IdentityService.Application.DTOs.Users;
 using IdentityService.Application.Interfaces;
+using IdentityService.Application.Services;
+using IdentityService.Shared.Common.DTOs.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using IdentityService.Shared.Common.DTOs.Identity;
 
 namespace IdentityService.Controllers
 {
@@ -177,6 +178,17 @@ namespace IdentityService.Controllers
         [ProducesResponseType(typeof(List<UserDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<UserDto>>> GetUsersByRole(string role)
             => Ok(await _users.GetUsersByRoleAsync(role));
+
+
+
+
+        [HttpDelete("{id}")]
+        // [Authorize(Roles = "Admin")] // İstersen sadece Admin silsin diye açabilirsin
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _users.DeleteAsync(id);
+            return NoContent(); // 204 Döndürür (Başarılı ve içerik yok)
+        }
 
 
     }

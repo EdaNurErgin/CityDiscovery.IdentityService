@@ -40,44 +40,189 @@ namespace IdentityService.Application.Services
             _publish = publish;
         }
 
-        public async Task<AuthResultDto> RegisterAsync(RegisterRequest r)
+        //public async Task<AuthResultDto> RegisterAsync(RegisterRequest r)
+        //{
+        //    if (await _users.EmailExistsAsync(r.Email))
+        //        throw new InvalidOperationException("Email already exists");
+
+        //    if (await _users.UserNameExistsAsync(r.UserName))
+        //        throw new InvalidOperationException("Username already exists");
+
+        //    var user = new User
+        //    {
+        //        UserName = r.UserName,
+        //        Email = r.Email,
+        //        PasswordHash = _hasher.Hash(r.Password),
+        //        Role = r.Role 
+        //    };
+
+        //    //await _users.AddAsync(user);
+        //    //await _uow.SaveChangesAsync();
+
+        //    //try
+        //    //{
+        //    //    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        //    //    await _publish.Publish(new UserCreatedEvent(
+        //    //        user.Id,
+        //    //        user.UserName,
+        //    //        user.Email,
+        //    //        user.Role.ToString(),
+        //    //        DateTime.UtcNow
+        //    //    ), cts.Token);
+        //    //}
+        //    //catch {  }
+
+        //    //var access = _jwt.CreateAccessToken(user);
+        //    await _users.AddAsync(user);
+        //    await _uow.SaveChangesAsync();
+
+        //    // --- LOGLAMA EKLEYEREK GÜNCELLEDİĞİMİZ KISIM ---
+        //    try
+        //    {
+        //        Console.WriteLine($"[IdentityService] Kullanıcı oluşturuldu ({user.UserName}). Event gönderiliyor...");
+
+        //        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // Süreyi biraz artırdım
+
+        //        await _publish.Publish(new UserCreatedEvent(
+        //            user.Id,
+        //            user.UserName,
+        //            user.Email,
+        //            user.Role.ToString(), // <-- BURAYA DİKKAT! "Owner" string olarak gidiyor mu?
+        //            DateTime.UtcNow
+        //        ), cts.Token);
+
+        //        Console.WriteLine("[IdentityService] UserCreatedEvent başarıyla RabbitMQ'ya gönderildi.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // HATA YUTMA, LOGLA!
+        //        Console.WriteLine($"[IdentityService HATA] Event gönderilemedi! Sebebi: {ex.Message}");
+        //        if (ex.InnerException != null)
+        //        {
+        //            Console.WriteLine($"[IdentityService HATA DETAY] Inner: {ex.InnerException.Message}");
+        //        }
+        //    }
+        //    // -----------------------------------------------
+
+        //    var access = _jwt.CreateAccessToken(user);
+        //    var refresh = await IssueRefreshTokenForNewDeviceAsync(user, Guid.NewGuid().ToString(), "init");
+        //    return new AuthResultDto { AccessToken = access, RefreshToken = refresh.Token, UserId = user.Id };
+        //}
+
+        //public async Task<AuthResultDto> RegisterAsync(RegisterRequest r)
+        //{
+        //    // TÜM METODU TRY-CATCH İÇİNE ALIYORUZ
+        //    try
+        //    {
+        //        // 1. Validasyonlar
+        //        if (await _users.EmailExistsAsync(r.Email))
+        //            throw new InvalidOperationException($"Email already exists: {r.Email}");
+
+        //        if (await _users.UserNameExistsAsync(r.UserName))
+        //            throw new InvalidOperationException($"Username already exists: {r.UserName}");
+
+        //        var user = new User
+        //        {
+        //            UserName = r.UserName,
+        //            Email = r.Email,
+        //            PasswordHash = _hasher.Hash(r.Password),
+        //            Role = r.Role
+        //        };
+
+        //        // 2. Veritabanı Kaydı (BURASI PATLIYOR OLABİLİR)
+        //        await _users.AddAsync(user);
+        //        await _uow.SaveChangesAsync();
+
+        //        // 3. Event Gönderimi
+        //        try
+        //        {
+        //            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        //            await _publish.Publish(new UserCreatedEvent(
+        //                user.Id,
+        //                user.UserName,
+        //                user.Email,
+        //                user.Role.ToString(),
+        //                DateTime.UtcNow
+        //            ), cts.Token);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            // Event hatası akışı bozmasın diye burası ayrı catch'te
+        //            Console.WriteLine($"Event gönderilemedi: {ex.Message}");
+        //        }
+
+        //        // 4. Token Üretimi
+        //        var access = _jwt.CreateAccessToken(user);
+        //        var refresh = await IssueRefreshTokenForNewDeviceAsync(user, Guid.NewGuid().ToString(), "init");
+
+        //        return new AuthResultDto { AccessToken = access, RefreshToken = refresh.Token, UserId = user.Id };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // --- BREAKPOINT'İ BURAYA KOY ---
+        //        // Mouse ile 'ex' üzerine gelip InnerException'a bak.
+        //        var message = ex.Message;
+        //        var inner = ex.InnerException?.Message;
+
+        //        Console.WriteLine($"[CRITICAL ERROR] RegisterAsync Failed: {message}");
+        //        if (inner != null) Console.WriteLine($"[INNER ERROR]: {inner}");
+
+        //        throw; // Hatayı tekrar fırlat ki API 500 dönsün
+        //    }
+        //}
+        public async Task<AuthResultDto?> RegisterAsync(RegisterRequest r)
         {
-            if (await _users.EmailExistsAsync(r.Email))
-                throw new InvalidOperationException("Email already exists");
-
-            if (await _users.UserNameExistsAsync(r.UserName))
-                throw new InvalidOperationException("Username already exists");
-
-            var user = new User
+            // 1. Ön Kontroller (Validasyonlar)
+            bool exists = await _users.EmailExistsAsync(r.Email) || await _users.UserNameExistsAsync(r.UserName);
+            if (exists)
             {
-                UserName = r.UserName,
-                Email = r.Email,
-                PasswordHash = _hasher.Hash(r.Password),
-                Role = r.Role 
-            };
-
-            await _users.AddAsync(user);
-            await _uow.SaveChangesAsync();
+                Console.WriteLine("[Register] Email veya Kullanıcı adı zaten mevcut.");
+                return null; // Veya hata mesajı içeren bir DTO dönebilirsin
+            }
 
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                await _publish.Publish(new UserCreatedEvent(
-                    user.Id,
-                    user.UserName,
-                    user.Email,
-                    user.Role.ToString(),
-                    DateTime.UtcNow
-                ), cts.Token);
-            }
-            catch {  }
+                // 2. Kullanıcıyı Oluştur ve Kaydet
+                var user = new User
+                {
+                    UserName = r.UserName,
+                    Email = r.Email,
+                    PasswordHash = _hasher.Hash(r.Password),
+                    Role = r.Role
+                };
 
-            var access = _jwt.CreateAccessToken(user);
-            var refresh = await IssueRefreshTokenForNewDeviceAsync(user, Guid.NewGuid().ToString(), "init");
-            return new AuthResultDto { AccessToken = access, RefreshToken = refresh.Token, UserId = user.Id };
+                await _users.AddAsync(user);
+                await _uow.SaveChangesAsync();
+
+                // 3. Event Gönderimi (Arka planda sessizce çalışır, hata olsa da sistemi durdurmaz)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        await _publish.Publish(new UserCreatedEvent(
+                            user.Id, user.UserName, user.Email, user.Role.ToString(), DateTime.UtcNow
+                        ), cts.Token);
+                    }
+                    catch (Exception ex) { Console.WriteLine($"[Event Error] {ex.Message}"); }
+                });
+
+                // 4. Yanıtı Hazırla
+                return new AuthResultDto
+                {
+                    AccessToken = _jwt.CreateAccessToken(user),
+                    RefreshToken = (await IssueRefreshTokenForNewDeviceAsync(user, Guid.NewGuid().ToString(), "init")).Token,
+                    UserId = user.Id
+                };
+            }
+            catch (Exception ex)
+            {
+                // Program durmaz, sadece log basar ve null döner.
+                Console.WriteLine($"[Register Critical Error] {ex.Message}");
+                return null;
+            }
         }
 
-    
 
         public async Task<AuthResultDto> LoginAsync(LoginRequest r)
         {
