@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IdentityService.Controllers
+namespace IdentityService.Api.Controllers
 {
     /// <summary>
     /// Authentication ve Authorization işlemleri için endpoint'ler

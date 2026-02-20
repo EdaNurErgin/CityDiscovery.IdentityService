@@ -5,7 +5,7 @@ using IdentityService.Shared.Common.DTOs.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IdentityService.Controllers
+namespace IdentityService.Api.Controllers
 {
     /// <summary>
     /// Kullanıcı yönetimi işlemleri için endpoint'ler
@@ -181,13 +181,34 @@ namespace IdentityService.Controllers
 
 
 
-
+        /// <summary>
+        ///Admin ilgili kullaniciyi siler
+        /// </summary>
         [HttpDelete("{id}")]
         // [Authorize(Roles = "Admin")] // İstersen sadece Admin silsin diye açabilirsin
         public async Task<IActionResult> Delete(Guid id)
         {
             await _users.DeleteAsync(id);
             return NoContent(); // 204 Döndürür (Başarılı ve içerik yok)
+        }
+
+
+        /// <summary>
+        /// Kullanıcı için profil fotoğrafı yükler
+        /// </summary>
+        /// <param name="id">Kullanıcı ID (GUID)</param>
+        /// <param name="file">Yüklenecek resim dosyası (jpg, png vb.)</param>
+        /// <returns>Güncellenmiş kullanıcı bilgileri</returns>
+        /// <response code="200">Fotoğraf başarıyla yüklendi</response>
+        /// <response code="400">Geçersiz dosya formatı</response>
+        [Authorize]
+        [HttpPost("{id:guid}/avatar")]
+        [Consumes("multipart/form-data")] // Swagger'da dosya seçme butonunu düzeltir
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserDto>> UploadAvatar(Guid id, IFormFile file)
+        {
+            var result = await _users.UploadAvatarAsync(id, file);
+            return Ok(result);
         }
 
 

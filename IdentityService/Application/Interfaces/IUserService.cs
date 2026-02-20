@@ -19,6 +19,8 @@ namespace IdentityService.Application.Interfaces
 
         Task<List<UserDto>> GetUsersByRoleAsync(string role);
 
+        Task<UserDto> UploadAvatarAsync(Guid id, IFormFile file);
+
 
 
     }

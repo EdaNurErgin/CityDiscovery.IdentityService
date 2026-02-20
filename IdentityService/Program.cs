@@ -45,6 +45,7 @@ namespace IdentityService
             var app = builder.Build();
 
 
+
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -77,6 +78,7 @@ namespace IdentityService
             app.MapHealthChecks("/health");
 
             app.MapControllers();
+            app.UseStaticFiles();
 
             app.Run();
         }
