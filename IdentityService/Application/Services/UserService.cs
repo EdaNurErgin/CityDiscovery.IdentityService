@@ -43,7 +43,13 @@ namespace IdentityService.Application.Services
                 isIdentityChanged = true;
             }
 
-            if (r.AvatarUrl != null && r.AvatarUrl != user.AvatarUrl)
+            //if (r.AvatarUrl != null && r.AvatarUrl != user.AvatarUrl)
+            //{
+            //    user.AvatarUrl = r.AvatarUrl;
+            //    isIdentityChanged = true;
+            //}
+
+            if (!string.IsNullOrEmpty(r.AvatarUrl) && r.AvatarUrl != user.AvatarUrl)
             {
                 user.AvatarUrl = r.AvatarUrl;
                 isIdentityChanged = true;
@@ -53,6 +59,8 @@ namespace IdentityService.Application.Services
             user.City = r.City ?? user.City;
             user.DateOfBirth = r.DateOfBirth ?? user.DateOfBirth;
             user.UpdatedAt = DateTime.UtcNow;
+
+
 
             await _uow.SaveChangesAsync();
 
@@ -105,7 +113,7 @@ namespace IdentityService.Application.Services
             return users.Select(ToDto).ToList();
         }
 
-        // --- ASIL DEĞİŞİKLİK BURADA (RECORD Event Yapısına Uygun) ---
+        
         public async Task DeleteAsync(Guid id)
         {
             var user = await _userRepository.GetByIdAsync(id);
