@@ -30,7 +30,8 @@ namespace IdentityService
 
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
-            
+            builder.Services.AddElasticsearch(builder.Configuration);
+
             builder.Services.AddMessageBus(builder.Configuration);
           
 

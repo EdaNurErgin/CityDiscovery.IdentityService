@@ -1,12 +1,11 @@
-﻿using System;
-using System.Text;
+﻿using Elastic.Clients.Elasticsearch;
+using IdentityService.Application.Consumers;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
+using System;
+using System.Text;
 namespace IdentityService.DependencyInjection
 {
     public static class ApiDI
@@ -102,9 +101,8 @@ namespace IdentityService.DependencyInjection
 
             services.AddMassTransit(x =>
             {
-                // Identity genelde sadece mesaj üretir (Publisher). 
-                // Ama ileride consumer eklerseniz buraya x.AddConsumer<...>(); yazarsınız.
-
+              
+                x.AddConsumer<UserCreatedEventConsumer>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(host, vhost, h =>
@@ -117,6 +115,18 @@ namespace IdentityService.DependencyInjection
                     cfg.ConfigureEndpoints(context);
                 });
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddElasticsearch(this IServiceCollection services, IConfiguration configuration)
+        {
+            var url = configuration["Elasticsearch:Url"] ?? "http://localhost:9200";
+            var settings = new ElasticsearchClientSettings(new Uri(url))
+                .DefaultIndex("users");
+
+            var client = new ElasticsearchClient(settings);
+            services.AddSingleton(client);
 
             return services;
         }

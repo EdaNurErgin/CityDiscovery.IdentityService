@@ -185,7 +185,7 @@ namespace IdentityService.Api.Controllers
         ///Admin ilgili kullaniciyi siler
         /// </summary>
         [HttpDelete("{id}")]
-        // [Authorize(Roles = "Admin")] // İstersen sadece Admin silsin diye açabilirsin
+        [Authorize(Roles = "Admin")] // İstersen sadece Admin silsin diye açabilirsin
         public async Task<IActionResult> Delete(Guid id)
         {
             await _users.DeleteAsync(id);
