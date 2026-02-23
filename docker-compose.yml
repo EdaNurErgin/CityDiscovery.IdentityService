@@ -1,4 +1,12 @@
-version: "3.9"
+# ============================================================================
+# CityDiscovery Identity Service - Standalone Docker Compose
+# ============================================================================
+# Runs ONLY Identity service with its dependencies (MSSQL + RabbitMQ + Elasticsearch)
+# Other services (venue, social, review, admin, gateway) run separately.
+#
+# Usage:
+#   docker-compose -f docker-compose.identity.yml up -d --build
+# ============================================================================
 
 services:
   rabbitmq:
@@ -24,7 +32,8 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=Eda12345!
       - MSSQL_PID=Developer
-    ports: ["1433:1433"]
+    ports:
+      - "1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     healthcheck:
@@ -43,6 +52,7 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m" 
     ports:
       - "9200:9200"
+    restart: unless-stopped
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.1
@@ -53,64 +63,33 @@ services:
       - elasticsearch
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    restart: unless-stopped
 
   identity:
     build: ./IdentityService
     container_name: identity-service
-    ports: ["5001:80"]
+    ports:
+      - "5001:80"
     depends_on:
       rabbitmq:
         condition: service_healthy
       mssql:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=mssql;Database=CityDiscovery_IdentityDb;User Id=sa;Password=Eda12345!;TrustServerCertificate=True;
       - Jwt__Issuer=identity
       - Jwt__Audience=citydiscovery
       - Jwt__Key=pLw3V!zJg7^2qK0xD8mR4tY1uC6bN9fQ5sH3kL0wX2yZ8rT6vB1nM4pQ7sU2dE9
-     
       - RabbitMq__Host=rabbitmq
       - RabbitMq__VirtualHost=/
       - RabbitMq__Username=guest
       - RabbitMq__Password=guest
-
-  venue:
-    build: ./VenueService
-    container_name: venue-service
-    ports: ["5002:80"]
-    depends_on:
-      rabbitmq:
-        condition: service_started  
-      mssql:
-        condition: service_started
-    environment:
-      - Jwt__Issuer=identity
-      - Jwt__Audience=citydiscovery
-      - Jwt__Key=pLw3V!zJg7^2qK0xD8mR4tY1uC6bN9fQ5sH3kL0wX2yZ8rT6vB1nM4pQ7sU2dE9
-
-  social:
-    build: ./SocialService
-    container_name: social-service
-    ports: ["5003:80"]
-    depends_on: [ mssql ]  
-
-  review:
-    build: ./ReviewService
-    container_name: review-service
-    ports: ["5004:80"]
-    depends_on: [ mssql ]
-
-  admin:
-    build: ./AdminService
-    container_name: admin-service
-    ports: ["5005:80"]
-    depends_on: [ mssql ]
-
-  gateway:
-    build: ./Gateway
-    container_name: gateway
-    ports: ["5000:80"]
-    depends_on: [ identity, venue, social, review, admin ]
+      - Elasticsearch__Url=http://elasticsearch:9200
+    restart: unless-stopped
 
 volumes:
   mssql-data:
