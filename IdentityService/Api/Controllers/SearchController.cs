@@ -18,6 +18,10 @@ namespace IdentityService.Api.Controllers
             _elasticClient = elasticClient;
         }
 
+
+        /// <summary>
+        /// User searchbox kutusudur. Bu kutuya kullanıcı ismi yazınca o isimdeki kullanıcılar listelenir.İnstagramda birini aratmak gibi
+        /// </summary>
         [HttpGet("users")]
         public async Task<IActionResult> SearchUsers([FromQuery] string keyword)
         {
